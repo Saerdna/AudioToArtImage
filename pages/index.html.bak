@@ -1,0 +1,11 @@
+<html>
+    <head>
+        <title>AudioConvertToImage</title>
+    </head>
+    <body>
+        <form action="/uploader" method="post">
+            选择 wav 文件:<input type="file" name="wav" multiple="mutiple"/>
+            <input type="submit"/>
+        </form>
+    </body>
+</html>
