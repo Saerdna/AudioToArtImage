@@ -1148,9 +1148,9 @@
           if(x != undefined && y != undefined){
             e.pageX = x;
             e.pageY = y;
-            console.log(e.pageX);
-            console.log(e.pageY);
-          }else return;
+          }else{
+            return;
+          }
           _this.updateInputFromEvent(e);
           _this.stopPreviewingInput();
           _this.inputStarted();
@@ -1161,9 +1161,9 @@
           if(x != undefined && y != undefined){
             e.pageX = x;
             e.pageY = y;
-            console.log(e.pageX);
-            console.log(e.pageY);
-          }else return;
+          }else{
+              return;
+          }
           _this.updateInputFromEvent(e);
           return previewActive();
         };

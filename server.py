@@ -4,6 +4,7 @@ import web
 import wave
 import numpy as np
 import math
+import json
 class WaveDecode():
     def __init__(self, filename):
         wav = wave.open(filename, "rb")
@@ -20,13 +21,16 @@ class WaveDecode():
         max_z = min(width - midX, height - midY)
         max_val = max(self._wave_data[0]) 
         arr = []
+        prePoi = None
         for t in xrange(len(self._timeIdx)):
+            if t % 100 != 0:continue
             z = (self._wave_data[0][t] / max_val) * max_z
             x = math.sin(t) * z + midX
             y = math.cos(t) * z + midY
-            arr.append((x, y))
-        print arr
-        
+            if prePoi != (x, y):
+                arr.append((x, y))
+                prePoi = (x, y)
+        return json.dumps(arr)
 urls = (
     '/uploader', 'uploader',
     '/', 'Index'
@@ -41,9 +45,8 @@ class Index:
         return render.index()
 class uploader():
     def POST(self):
-        w = web.input()
-        return True
+        audio = WaveDecode("./data/38.wav")
+        arr = audio._toCoordinate(402, 264, 660, 510)
+        return arr
 if __name__ == '__main__':
     app.run()
-    #audio = WaveDecode("./data/38.wav")
-    #audio._toCoordinate(402, 264, 660, 510)
