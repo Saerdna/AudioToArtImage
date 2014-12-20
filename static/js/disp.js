@@ -17,20 +17,19 @@ function sleepUp(){
     }
 }
 function flush(){
-    $.ajax({url:"../uploader", async:false, type:"post"}).success(function(ret){
+    sparks = $("#sparks");
+    
+    $.ajax({url:"../uploader", async:false, type:"post", data: {"width":sparks.width(), "height":sparks.height()}}).success(function(ret){
         arr = eval(ret);
-        console.log("start");
-        sparks = $("#sparks");
-        console.log(sparks);
-        sparks.trigger("mousemove", [402, 264]);
-        sparks.trigger("mousedown", [402, 264]);
+        sparks.trigger("mousemove", [sparks.width() / 2, sparks.height() / 2]);
+        sparks.trigger("mousedown", [sparks.width() / 2, sparks.height() / 2]);
         tot = 0
         console.log(arr.length);
         for(i = 0 ; i < arr.length; ++i){
             poi = [arr[i][0], arr[i][1]];
             //sparks.trigger("mousemove", poi);
             setTimeout(sleepMove(poi), tot);
-            tot += Math.random() * 20;
+            tot += 20;
         }
         setTimeout(sleepUp(), tot);
         console.log(tot);
