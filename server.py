@@ -8,8 +8,9 @@ import json
 import base64
 
 class WaveDecode():
-    def __init__(self, filename):
-        wav = wave.open(filename, "rb")
+    def __init__(self, filebuff):
+        #wav = wave.open(filename, "rb")
+        wav = filebuff
         self._params = wav.getparams()
         nchannels, sampwidth, framerate, nframes = self._params[:4]
         self._str_data = wav.readframes(nframes)
@@ -18,7 +19,7 @@ class WaveDecode():
         self._wave_data = wave_data.T
         self._timeIdx = np.arange(0, nframes) * (1.0 / framerate)
         wav.close()
-    def _toCoordinate(self, width, height):
+    def toCoordinate(self, width, height):
         preDis = None
         midX = width * 1.0 / 2
         midY = height * 1.0 / 2
@@ -60,10 +61,13 @@ class Saver:
         fp.close()
 class Uploader:
     def POST(self):
-        audio = WaveDecode("./data/38.wav")
-        i = web.input()
-        width = int(i.get('width'))
-        height = int(i.get('height'))
+        req = web.input()
+        width = req.get('width')
+        height = req.get('height')
+        filename = req.get('name')
+        filebuff = req.get('file')
+        print req
+        audio = WaveDecode(filebuff)
         arr = audio._toCoordinate(width, height)
         return arr
 if __name__ == '__main__':

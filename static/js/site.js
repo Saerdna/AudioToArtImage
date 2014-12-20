@@ -880,7 +880,6 @@
       }
       return true;
     };
-
     Silks.prototype.clear = function(withParticles) {
       var id;
       if (withParticles == null) {
@@ -2567,6 +2566,9 @@
             b.showSymmetryControls(false);
             return $('#download-image').attr('src', silks.getImageUrl());
           }
+        },
+        upload : function(){
+            console.log("succ");
         },
         shareButtonClick: function() {
           if (b.shareDisabled()) {

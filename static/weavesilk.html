@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<!-- affiliate-data=myAffiliateData, app-argument=myURL -->
+	<!-- <meta name="apple-itunes-app" content="app-id=436590129"> -->
+	<!-- Always force latest IE rendering engine (even in intranet) & Chrome Frame -->
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
+	<meta name="viewport" content="width=device-width">
+
+	<meta property="og:description"content="Create beautiful flowing art with Silk."/>
+	
+	<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+	<link rel="stylesheet" href="css/normalize.css" />
+	<link rel="stylesheet" href="css/font-awesome.css" />
+	<link rel="stylesheet" href="css/ss-social.css" />
+	<link rel="stylesheet" href="css/site.css" />
+	<link rel="stylesheet" href="css/custom.css" />
+
+	<script src="js/jquery-1.8.1.min.js"></script>
+	<script src="js/jquery.fullscreen.js"></script>
+	<script src="js/underscore.min.js"></script>
+	<script src="js/knockout-2.2.0.min.js"></script>
+	<script src="js/d3.v3.min.js"></script>
+	<script src="js/keymaster.js"></script>
+	<script src="js/noise.js"></script>
+	<script src="js/detect.js"></script>
+	<script src="js/site.js"></script>
+	<script src="js/disp.js"></script>
+	<script src="js/plupload.full.min.js"></script>
+	<title>Silk &ndash; Interactive Generative Art</title>
+</head>
+
+<body data-bind="css: { 'iphone': isIPhone, 'right-side-up': isRightSideUp, 'silk-active': silkActive, 'mouse-over-previewable-controls': mouseOverControls, 'mouse-down-on-slider': mouseDownOnSlider }">
+	
+	<div id="canvii-container">
+
+		<div id="main-controls" class="controls-container"> 
+			<div class="row btn-row share-btn-row" id="container">
+				<div class="btn" id="pickfiles" data-bind="css: { visible: notPristine }">
+					<span class="text">选择文件</span>
+				</div>
+				<div class="btn" id="clearfiles" data-bind="css: { visible: notPristine }">
+					<span class="text">清空列表</span>
+				</div>
+				<div class="btn" id="uploadfiles" data-bind="css: { visible: notPristine }">
+					<span class="text">制作图片</span>
+				</div>
+				<div class="btn" id="selected-color" data-bind="click: toggleAllControls,css: { visible: notPristine }">
+					<span class="text">参数设置</span>
+				</div>
+			</div>
+			<div id="filelist" class="file-lists">Your browser doesn't have Flash, Silverlight or HTML5 support.</div>
+			<div class="row controls-row color-and-symmetry-row" data-bind="css: { visible: showColorPicker }">
+				<svg id="colorpicker">
+
+				</svg>
+				<div class="label" style="text-align: center;">Drag colors to blend.</div>
+
+				<div id="symmetry-controls">
+					<div class="one-d slider control" id="sym-num-rotations">
+						<div class="slider-bg">
+							<div class="ticks">
+								<div class="tick one"></div>
+								<div class="tick two"></div>
+								<div class="tick three"></div>
+								<div class="tick four"></div>
+								<div class="tick five"></div>
+								<div class="tick six"></div>
+							</div>
+							<div class="slider-bg-pc"></div>
+						</div>
+						<div class="handle"></div>
+						<div class="ghost-handle"></div>
+					</div>
+
+					<div id="sym-num-rotations-label" class="label"></div>
+
+					<div class="toggle control" id="toggle-mirror" data-bind="click: toggleMirror, css: { on: mirror }">
+						<div class="description">Mirror across center</div>
+						<div class="state"><span class="state-on">On</span><span class="state-off">Off</span></div>
+					</div>
+
+					<div class="toggle control" id="toggle-spiral" data-bind="click: toggleSpiral, css: { on: spiral }">
+						<div class="description">Spiral towards center</div>
+						<div class="state"><span class="state-on">On</span><span class="state-off">Off</span></div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<canvas id="silk-1" class="silk-canvas active"></canvas>
+		<canvas id="silk-2" class="silk-canvas buffer"></canvas>
+		<canvas id="sparks"></canvas>
+
+	</div>
+
+	<div id="tips">
+		<div class="tip">Press <b>Space</b> to start anew.</div>
+		<div class="tip">Press <b>Z</b> to undo.</div>
+
+		<!-- <div class="tip"><i class="icon-undo"></i> lets you travel back in time.</div> -->
+		<!-- <div class="tip"><i class="icon-circle"></i> unlocks colors and symmetries.</div> -->
+
+		<div class="magic tip">Try different colors and symmetries.</div>
+		<div class="tip">Sally forth, you weaver of wonder, sower of silken waves.</div>
+	</div>
+	<script type="text/javascript">
+// Custom example logic
+
+var uploader = new plupload.Uploader({
+	runtimes : 'html5,flash,silverlight,html4',
+	browse_button : 'pickfiles', // you can pass in id...
+	container: document.getElementById('container'), // ... or DOM Element itself
+	url : '/uploader',
+	flash_swf_url : 'js/Moxie.swf',
+	silverlight_xap_url : 'js/Moxie.xap',
+	
+	filters : {
+		max_file_size : '100mb',
+		mime_types: [
+			{title : "Wave files", extensions : "wav"},
+			{title : "text files", extensions : "txt"},
+			{title : "image files", extensions : "png,jpg,gif"}
+		]
+	},
+
+	init: {
+		PostInit: function() {
+			document.getElementById('filelist').innerHTML = '';
+
+			document.getElementById('uploadfiles').onclick = function() {
+				sparks = document.getElementById("sparks");
+				width = sparks.getAttribute('width');
+				height = sparks.getAttribute('height');
+				uploader.settings.url = "/uploader?width=" + width + "&height=" + height;
+				uploader.start();
+				return false;
+			};
+			document.getElementById('clearfiles').onclick = function(){
+				uploader.splice();
+				$("#filelist div").remove();
+				return false;
+			}
+		},
+
+		FilesAdded: function(up, files) {
+			var deleteHandle = function(uploaderObject, fileObject) {
+        return function(event) {
+            event.preventDefault();
+            uploaderObject.removeFile(fileObject);
+            $(this).closest("div#" + fileObject.id).remove();
+        };
+    };
+    		for (var i in files) {
+        		$('#filelist').append($('<div id="' + files[i].id + '">' + files[i].name + ' (' + plupload.formatSize(files[i].size) + ') <b></b><div class="file_action"><a href="#" id="deleteFile' + files[i].id + '"></a></div></div>'));
+
+        $('#deleteFile' + files[i].id).click(deleteHandle(up, files[i]));
+    }  
+			/*
+			plupload.each(files, function(file) {
+				
+				
+			});*/
+		},
+        FileUploaded: function(up, file, resp){
+        	console.log(resp);  
+        },
+		UploadProgress: function(up, file) {
+			document.getElementById(file.id).getElementsByTagName('b')[0].innerHTML = '<span>' + file.percent + "%</span>";
+		},
+
+		Error: function(up, err) {
+			document.getElementById('console').innerHTML += "\nError #" + err.code + ": " + err.message;
+		}
+	}
+});
+
+uploader.init();
+</script>
+</body>
+</html>
