@@ -1167,7 +1167,10 @@
           return previewActive();
         };
       })(this)).mouseup((function(_this) {
-        return function(e) {
+        return function(e,x,y) {
+            if(x == undefined || y == undefined){
+                return;
+            }
           _this.updateInputFromEvent(e);
           if (_this.inputIsActive) {
             _this.nextInputPreviewSilk();

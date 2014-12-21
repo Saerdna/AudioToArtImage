@@ -26,7 +26,6 @@
 	<script src="js/noise.js"></script>
 	<script src="js/detect.js"></script>
 	<script src="js/site.js"></script>
-	<script src="js/disp.js"></script>
 	<script src="js/plupload.full.min.js"></script>
 	<title>Silk &ndash; Interactive Generative Art</title>
 </head>
@@ -58,6 +57,21 @@
 				<div class="label" style="text-align: center;">Drag colors to blend.</div>
 
 				<div id="symmetry-controls">
+					<div class="one-d slider control" id="image-ratio">
+						<div class="slider-bg">
+							<div class="ticks">
+								<div class="tick one"></div>
+								<div class="tick two"></div>
+								<div class="tick three"></div>
+								<div class="tick four"></div>
+								<div class="tick five"></div>
+								<div class="tick six"></div>
+							</div>
+							<div class="slider-bg-pc"></div>
+						</div>
+						<div class="handle"></div>
+						<div class="ghost-handle"></div>
+					</div>
 					<div class="one-d slider control" id="sym-num-rotations">
 						<div class="slider-bg">
 							<div class="ticks">
@@ -93,17 +107,6 @@
 		<canvas id="sparks"></canvas>
 
 	</div>
-
-	<div id="tips">
-		<div class="tip">Press <b>Space</b> to start anew.</div>
-		<div class="tip">Press <b>Z</b> to undo.</div>
-
-		<!-- <div class="tip"><i class="icon-undo"></i> lets you travel back in time.</div> -->
-		<!-- <div class="tip"><i class="icon-circle"></i> unlocks colors and symmetries.</div> -->
-
-		<div class="magic tip">Try different colors and symmetries.</div>
-		<div class="tip">Sally forth, you weaver of wonder, sower of silken waves.</div>
-	</div>
 	<script type="text/javascript">
 // Custom example logic
 
@@ -126,6 +129,7 @@ var uploader = new plupload.Uploader({
 
 	init: {
 		PostInit: function() {
+			//document.getElementById("silk-1").hide();
 			document.getElementById('filelist').innerHTML = '';
 
 			document.getElementById('uploadfiles').onclick = function() {
@@ -145,25 +149,57 @@ var uploader = new plupload.Uploader({
 
 		FilesAdded: function(up, files) {
 			var deleteHandle = function(uploaderObject, fileObject) {
-        return function(event) {
-            event.preventDefault();
-            uploaderObject.removeFile(fileObject);
-            $(this).closest("div#" + fileObject.id).remove();
-        };
-    };
+        		return function(event) {
+            		event.preventDefault();
+            		uploaderObject.removeFile(fileObject);
+            		$(this).closest("div#" + fileObject.id).remove();
+        		};
+    		};
     		for (var i in files) {
         		$('#filelist').append($('<div id="' + files[i].id + '">' + files[i].name + ' (' + plupload.formatSize(files[i].size) + ') <b></b><div class="file_action"><a href="#" id="deleteFile' + files[i].id + '"></a></div></div>'));
 
-        $('#deleteFile' + files[i].id).click(deleteHandle(up, files[i]));
-    }  
-			/*
-			plupload.each(files, function(file) {
-				
-				
-			});*/
+        		$('#deleteFile' + files[i].id).click(deleteHandle(up, files[i]));
+    		}  
 		},
         FileUploaded: function(up, file, resp){
-        	console.log(resp);  
+        	function move(poi){
+    			$("#sparks").trigger("mousemove", poi);
+			}
+			function sleepMove(poi){
+			    return function()
+			    {
+			        move(poi);
+			    }
+			}
+			function Up(filename){
+			    $("#sparks").trigger("mouseup");
+			    var image = $("#silk-2")[0].toDataURL("image/png");
+				$.post("/save",{"image":image, 'filename':filename});
+			}
+			function sleepUp(filename){
+			    return function(){
+			        Up(filename);
+			    }
+			}
+        	arr = eval(resp.response);
+        	sparks = $("#sparks");
+        	silk = $("#silk-2").get(0).getContext("2d");
+        	silk.globalCompositeOperation = 'source-over';
+        	silk.globalAlpha = 1;
+        	silk.fillRect( 0 , 0 , sparks.width(), sparks.height());
+        	//return;
+        	sparks.trigger("mousemove", [sparks.width() / 2, sparks.height() / 2]);
+        	sparks.trigger("mousedown", [sparks.width() / 2, sparks.height() / 2]);
+        	tot = 0
+        	console.log(arr.length);
+	        for(i = 0 ; i < arr.length; ++i){
+	            poi = [arr[i][0], arr[i][1]];
+	            //sparks.trigger("mousemove", poi);
+	            setTimeout(sleepMove(poi), tot);
+	            tot += 50;
+	        }
+        	setTimeout(sleepUp(file.name), tot);
+        	console.log(tot);  
         },
 		UploadProgress: function(up, file) {
 			document.getElementById(file.id).getElementsByTagName('b')[0].innerHTML = '<span>' + file.percent + "%</span>";
