@@ -72,6 +72,23 @@
 						<div class="handle"></div>
 						<div class="ghost-handle"></div>
 					</div>
+					<div id="sym-ratio-label" class="label"></div>
+					<div class="one-d slider control" id="time-delay">
+						<div class="slider-bg">
+							<div class="ticks">
+								<div class="tick one"></div>
+								<div class="tick two"></div>
+								<div class="tick three"></div>
+								<div class="tick four"></div>
+								<div class="tick five"></div>
+								<div class="tick six"></div>
+							</div>
+							<div class="slider-bg-pc"></div>
+						</div>
+						<div class="handle"></div>
+						<div class="ghost-handle"></div>
+					</div>
+					<div id="sym-delay-label" class="label"></div>
 					<div class="one-d slider control" id="sym-num-rotations">
 						<div class="slider-bg">
 							<div class="ticks">
@@ -121,9 +138,7 @@ var uploader = new plupload.Uploader({
 	filters : {
 		max_file_size : '100mb',
 		mime_types: [
-			{title : "Wave files", extensions : "wav"},
-			{title : "text files", extensions : "txt"},
-			{title : "image files", extensions : "png,jpg,gif"}
+			{title : "Wave files", extensions : "wav"}
 		]
 	},
 
@@ -136,7 +151,8 @@ var uploader = new plupload.Uploader({
 				sparks = document.getElementById("sparks");
 				width = sparks.getAttribute('width');
 				height = sparks.getAttribute('height');
-				uploader.settings.url = "/uploader?width=" + width + "&height=" + height;
+				var image_ratio = $("#sym-ratio-label")[0].innerHTML.split("-")[0];
+				uploader.settings.url = "/uploader?width=" + width + "&height=" + height + "&image_ratio=" + image_ratio;
 				uploader.start();
 				return false;
 			};
@@ -192,11 +208,12 @@ var uploader = new plupload.Uploader({
         	sparks.trigger("mousedown", [sparks.width() / 2, sparks.height() / 2]);
         	tot = 0
         	console.log(arr.length);
+        	var time_delay = $("#sym-delay-label")[0].innerHTML.split("-")[0];
 	        for(i = 0 ; i < arr.length; ++i){
 	            poi = [arr[i][0], arr[i][1]];
 	            //sparks.trigger("mousemove", poi);
 	            setTimeout(sleepMove(poi), tot);
-	            tot += 50;
+	            tot += Number(time_delay);
 	        }
         	setTimeout(sleepUp(file.name), tot);
         	console.log(tot);  
@@ -206,7 +223,7 @@ var uploader = new plupload.Uploader({
 		},
 
 		Error: function(up, err) {
-			document.getElementById('console').innerHTML += "\nError #" + err.code + ": " + err.message;
+			//document.getElementById('console').innerHTML += "\nError #" + err.code + ": " + err.message;
 		}
 	}
 });
