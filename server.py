@@ -1,6 +1,7 @@
 import os
 import sys
 import web
+import random
 import wave
 import numpy as np
 import math
@@ -10,7 +11,7 @@ import random
 
 class WaveDecode():
     def __init__(self, filebuff):
-        fp = open("tmp.wav", "w+")
+        fp = open("tmp.wav", "wb")
         fp.write(filebuff)
         fp.close()
         wav = wave.open("tmp.wav", "rb")
