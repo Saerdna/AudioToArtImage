@@ -36,9 +36,9 @@
 
 		<div id="main-controls" class="controls-container"> 
 			<div class="row btn-row share-btn-row" id="container">
-				<div class="btn" id="pickfiles" data-bind="css: { visible: notPristine }">
+				<!--div class="btn" id="pickfiles" data-bind="css: { visible: notPristine }">
 					<span class="text">选择文件</span>
-				</div>
+				</div-->
 				<div class="btn" id="clearfiles" data-bind="css: { visible: notPristine }">
 					<span class="text">清空列表</span>
 				</div>
@@ -119,7 +119,7 @@
 				</div>
 			</div>
 		</div>
-		<div id="drop-target">将文件夹或文件拖到框中</div>
+		<div id="drop-target">将文件夹或文件拖入框中</div>
 		<canvas id="silk-1" class="silk-canvas active"></canvas>
 		<canvas id="silk-2" class="silk-canvas buffer"></canvas>
 		<canvas id="sparks"></canvas>
@@ -172,7 +172,6 @@ var uploader = new plupload.Uploader({
 			}
 
 		},
-
 		FilesAdded: function(up, files) {
 			var deleteHandle = function(uploaderObject, fileObject) {
         		return function(event) {
@@ -229,7 +228,9 @@ var uploader = new plupload.Uploader({
 		UploadProgress: function(up, file) {
 			document.getElementById(file.id).getElementsByTagName('b')[0].innerHTML = '<span>' + file.percent + "%</span>";
 		},
-
+		UploadComplete:function(){
+			alert("图片处理完成");
+		},
 		Error: function(up, err) {
 			//document.getElementById('console').innerHTML += "\nError #" + err.code + ": " + err.message;
 		}
