@@ -119,19 +119,17 @@
 				</div>
 			</div>
 		</div>
-		<div id="drop-target">将文件夹或文件拖到框中</div>
 		<canvas id="silk-1" class="silk-canvas active"></canvas>
 		<canvas id="silk-2" class="silk-canvas buffer"></canvas>
 		<canvas id="sparks"></canvas>
+
 	</div>
 	<script type="text/javascript">
 // Custom example logic
 
 var uploader = new plupload.Uploader({
 	runtimes : 'html5,flash,silverlight,html4',
-	drop_element : 'drop-target',
-	browse_button : 'drop-target',
-	//browse_button : 'pickfiles', // you can pass in id...
+	browse_button : 'pickfiles', // you can pass in id...
 	container: document.getElementById('container'), // ... or DOM Element itself
 	url : '/uploader',
 	flash_swf_url : 'js/Moxie.swf',
@@ -149,14 +147,6 @@ var uploader = new plupload.Uploader({
 			document.getElementById('filelist').innerHTML = '';
 
 			document.getElementById('uploadfiles').onclick = function() {
-				$.ajax({url:"/path?op=get", async: false}).success(function(resp){
-						path = prompt("请填写图片输出的路径", resp);
-						$.ajax({url:"/path?op=set&path="+path, async:false}).success(function(resp){
-							if(resp == "False"){
-								alert("无法创建目录,请检查目录是否合法");
-							}
-						});
-				});
 				sparks = document.getElementById("sparks");
 				width = sparks.getAttribute('width');
 				height = sparks.getAttribute('height');
@@ -170,7 +160,6 @@ var uploader = new plupload.Uploader({
 				$("#filelist div").remove();
 				return false;
 			}
-
 		},
 
 		FilesAdded: function(up, files) {
@@ -235,26 +224,7 @@ var uploader = new plupload.Uploader({
 		}
 	}
 });
-uploader.bind('Init', function(up, params) {
-	if (uploader.features.dragdrop) {
-		var target = $("#drop-target")[0];
-          target.ondragover = function(event) {
-            event.dataTransfer.dropEffect = "copy";
-          };
-          
-          target.ondragenter = function() {
-            this.className = "dragover";
-          };
-          
-          target.ondragleave = function() {
-            this.className = "";
-          };
-          
-          target.ondrop = function() {
-            this.className = "";
-          };
-        }
-      });
+
 uploader.init();
 </script>
 </body>

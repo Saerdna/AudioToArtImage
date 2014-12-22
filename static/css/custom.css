@@ -1,3 +1,22 @@
 .file-lists{margin:15px 5px 25px 5px;color:#FFFFFF;text-shadow:0 0 5px #000, 1px 1px 0 #000;}
 div.file_action{float: right;width: 16px;height: 16px;margin-left: 15px;}
 div.file_action a{background: url('../img/delete.gif');display: block;width: 16px;height: 16px;pointer-events: all;}
+#drop-target {
+    border: 5px dashed #FF0061;
+    text-align: center;
+    color: #00FFC5;
+    background: #000000;
+    font-size: 25px;
+    width: 400px;
+    height: 300px;
+    line-height: 300px;
+    cursor: pointer;
+    float: right;
+    position: relative;
+    z-index: 10;
+}
+
+#drop-target.dragover {
+    background: rgba(255, 255, 255, 0.4);
+    border-color: green;
+}
