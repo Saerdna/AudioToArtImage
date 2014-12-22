@@ -1,0 +1,3 @@
+.file-lists{margin:15px 5px 25px 5px;color:#FFFFFF;text-shadow:0 0 5px #000, 1px 1px 0 #000;}
+div.file_action{float: right;width: 16px;height: 16px;margin-left: 15px;}
+div.file_action a{background: url('../img/delete.gif');display: block;width: 16px;height: 16px;pointer-events: all;}

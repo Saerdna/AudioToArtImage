@@ -525,6 +525,8 @@
       restingDistance: 0,
       rigidity: 0.2,
       symType: 'point',
+      symRatio:20,
+      symDelay:50,
       symNumRotations: 1,
       symMirror: true,
       symCenter: 'centerScreen',
@@ -880,7 +882,6 @@
       }
       return true;
     };
-
     Silks.prototype.clear = function(withParticles) {
       var id;
       if (withParticles == null) {
@@ -1168,7 +1169,10 @@
           return previewActive();
         };
       })(this)).mouseup((function(_this) {
-        return function(e) {
+        return function(e,x,y) {
+            if(x == undefined || y == undefined){
+                return;
+            }
           _this.updateInputFromEvent(e);
           if (_this.inputIsActive) {
             _this.nextInputPreviewSilk();
@@ -1803,7 +1807,7 @@
   };
 
   initUI = function(silks) {
-    var initColorPicker, initPreview, initSlider, initializedUI, makeToggle, mirror, mouseDownOnSlider, mouseOverPreviewableControls, preview, settingObservable, showColorPicker, showSymmetryControls, spiral, symSlider, toggleMirror, toggleSpiral, _ref1, _ref2;
+    var initColorPicker, initPreview, initSlider, initializedUI, makeToggle, mirror, mouseDownOnSlider, mouseOverPreviewableControls, preview, settingObservable, showColorPicker, showSymmetryControls, spiral, delaySlider, ratioSlider, symSlider, toggleMirror, toggleSpiral, _ref1, _ref2;
     showColorPicker = ko.observable(false);
     showSymmetryControls = ko.observable(false);
     showColorPicker.subscribe(function(val) {
@@ -2368,10 +2372,38 @@
     $('#toggle-spiral').mouseenter(function() {
       return preview.newPreviewSilk({}, 'spiral');
     });
+    delaySlider = initSlider("#time-delay", {
+        x: _.unlerp(50, 650, _.load('symDelay', silks.silkSettingsState.symDelay))
+    }, function(vals, ghost){
+        var silkState, state;
+        state = {
+            symDelay: Math.round(_.lerp(50, 650, vals.x))
+        };
+        _.save('symDelay', state.symDelay);
+        $('#sym-delay-label').html("" + state.symDelay + "-悬停时间");
+        if (!ghost) {
+            silks.extendSilkSettingsState(state);
+        }
+        return silkState = silks.silkSettingsState;
+    });
+    ratioSlider = initSlider("#image-ratio", {
+      x: _.unlerp(5, 35, _.load('symRatio', silks.silkSettingsState.symRatio))
+    }, function(vals, ghost){
+        var silkState, state;
+        state = {
+            symRatio: Math.round(_.lerp(5, 35, vals.x))
+        };
+        _.save('symRatio', state.symRatio);
+        $('#sym-ratio-label').html("" + state.symRatio + "-图形密度");
+        if (!ghost) {
+            silks.extendSilkSettingsState(state);
+        }
+        return silkState = silks.silkSettingsState;
+    });
     symSlider = initSlider('#sym-num-rotations', {
       x: _.unlerp(1, 6, _.load('symNumRotations', silks.silkSettingsState.symNumRotations))
     }, function(vals, ghost) {
-      var silkState, state;
+        var silkState, state;
       state = {
         symNumRotations: Math.round(_.lerp(1, 6, vals.x))
       };
@@ -2567,6 +2599,9 @@
             b.showSymmetryControls(false);
             return $('#download-image').attr('src', silks.getImageUrl());
           }
+        },
+        upload : function(){
+            console.log("succ");
         },
         shareButtonClick: function() {
           if (b.shareDisabled()) {
