@@ -39,9 +39,9 @@
 				<!--div class="btn" id="pickfiles" data-bind="css: { visible: notPristine }">
 					<span class="text">选择文件</span>
 				</div-->
-				<div class="btn" id="clearfiles" data-bind="css: { visible: notPristine }">
+				<!--div class="btn" id="clearfiles" data-bind="css: { visible: notPristine }">
 					<span class="text">清空列表</span>
-				</div>
+				</div-->
 				<div class="btn" id="uploadfiles" data-bind="css: { visible: notPristine }">
 					<span class="text">制作图片</span>
 				</div>
@@ -125,8 +125,51 @@
 		<canvas id="sparks"></canvas>
 	</div>
 	<script type="text/javascript">
-// Custom example logic
-
+        // Custom example logic
+function draw_image_callback(resp){
+    function move(poi){
+        $("#sparks").trigger("mousemove", poi);
+    }
+    function sleepMove(poi){
+        return function()
+        {
+            move(poi);
+        }
+    }
+    function Up(filename){
+        console.log("ready to post");
+        $("#sparks").trigger("mouseup");
+        var image = $("#silk-2")[0].toDataURL("image/png");
+        $.post("/save",{"image":image, 'filename':filename});
+    }
+    function sleepUp(filename){
+        return function(){
+            Up(filename);
+        }
+    }
+    if(resp == null || resp == 'null'){
+        console.log("no new files");
+        return;
+    }
+    arr = eval(resp);
+    sparks = $("#sparks");
+    silk = $("#silk-2").get(0).getContext("2d");
+    silk.globalCompositeOperation = 'source-over';
+    silk.globalAlpha = 1;
+    silk.fillRect( 0 , 0 , sparks.width(), sparks.height());
+    sparks.trigger("mousemove", [sparks.width() / 2, sparks.height() / 2]);
+    sparks.trigger("mousedown", [sparks.width() / 2, sparks.height() / 2]);
+    tot = 0
+    console.log(arr.length);
+    var time_delay = $("#sym-delay-label")[0].innerHTML.split("-")[0];
+    for(i = 0 ; i < arr.length; ++i){
+        poi = [arr[i][0], arr[i][1]];
+        setTimeout(sleepMove(poi), tot);
+        tot += Number(time_delay);
+    }
+    setTimeout(sleepUp("default"), tot);
+    console.log(tot);  
+}
 var uploader = new plupload.Uploader({
 	runtimes : 'html5,flash,silverlight,html4',
 	drop_element : 'drop-target',
@@ -149,28 +192,44 @@ var uploader = new plupload.Uploader({
 			document.getElementById('filelist').innerHTML = '';
 
 			document.getElementById('uploadfiles').onclick = function() {
-				$.ajax({url:"/path?op=get", async: false}).success(function(resp){
-						path = prompt("请填写图片输出的路径", resp);
-						$.ajax({url:"/path?op=set&path="+path, async:false}).success(function(resp){
+                $.ajax({url:"/path?op=get&path_type=input", async: false}).success(function(resp){
+						path = prompt("请填写图片输入的路径", resp);
+						$.ajax({url:"/path?op=set&path_type=input&path="+path, async:false}).success(function(resp){
 							if(resp == "False"){
 								alert("无法创建目录,请检查目录是否合法");
 							}
 						});
 				});
-				sparks = document.getElementById("sparks");
-				width = sparks.getAttribute('width');
-				height = sparks.getAttribute('height');
-				var image_ratio = $("#sym-ratio-label")[0].innerHTML.split("-")[0];
-				uploader.settings.url = "/uploader?width=" + width + "&height=" + height + "&image_ratio=" + image_ratio;
+                $.ajax({url:"/path?op=get&path_type=output", async: false}).success(function(resp){
+						path = prompt("请填写图片输出的路径", resp);
+						$.ajax({url:"/path?op=set&path_type=output&path="+path, async:false}).success(function(resp){
+							if(resp == "False"){
+								alert("无法创建目录,请检查目录是否合法");
+							}
+						});
+				});
+                setInterval(function(){
+                        console.log("crontab start");
+                        sparks = document.getElementById("sparks");
+                        width = sparks.getAttribute('width');
+                        height = sparks.getAttribute('height');
+                        var image_ratio = $("#sym-ratio-label")[0].innerHTML.split("-")[0];
+                        $.ajax({url:"/flush?width=" + width + "&height=" + height + "&image_ratio=" + image_ratio, async: false}).success(draw_image_callback);
+                        console.log("flush once");        
+                },5000);
+                /*
+                uploader.settings.url = "/flush?width=" + width + "&height=" + height + "&image_ratio=" + image_ratio;
 				uploader.start();
-				return false;
-			};
+                */
+                return false;
+            };
+            /*
 			document.getElementById('clearfiles').onclick = function(){
 				uploader.splice();
 				$("#filelist div").remove();
 				return false;
 			}
-
+            */
 		},
 		FilesAdded: function(up, files) {
 			var deleteHandle = function(uploaderObject, fileObject) {

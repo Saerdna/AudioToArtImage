@@ -11,11 +11,8 @@ import thread
 
 mylock = thread.allocate_lock()  
 class WaveDecode():
-    def __init__(self, filebuff):
-        fp = open("tmp.wav", "wb")
-        fp.write(filebuff)
-        fp.close()
-        wav = wave.open("tmp.wav", "rb")
+    def __init__(self, filename):
+        wav = wave.open(filename, "rb")
         self._params = wav.getparams()
         nchannels, sampwidth, framerate, nframes = self._params[:4]
         self._str_data = wav.readframes(nframes)
@@ -53,6 +50,7 @@ class WaveDecode():
         return json.dumps(arr)
 urls = (
     '/uploader', 'Uploader',
+    '/flush', 'Flush',
     '/save', 'Saver',
     '/path', 'Path',
     '/', 'Index'
@@ -67,38 +65,87 @@ class Index:
         return render.index()
 global output_path
 output_path = None
+global input_path
+input_path = None
 class Path:
     def GET(self):
         global output_path
+        global input_path
         i = web.input()
         op = i.get('op')
+        path_type = i.get('path_type')
         if op == 'get':
-            if output_path == None:
-                output_path = os.getcwd() + '/data/save/'
-            return output_path
+            if path_type == "output":
+                if output_path == None:
+                    output_path = os.getcwd() + '/data/save/'
+                return output_path
+            elif path_type == "input":
+                if input_path == None:
+                    input_path = os.getcwd() + '/data/input/'
+                return input_path
         elif op == 'set':
             path = i.get('path')
-            output_path = path
+            if path_type == "output":
+                output_path = path
+            elif path_type == "input":
+                input_path = path
             try:
-                os.makedirs(output_path)
+                os.makedirs(path)
             except OSError as exc: # Python >2.5 (except OSError, exc: for Python <2.5)
                 if os.path.isdir(path):
                     pass
                 else:
                     return False
             return True
+global g_filename
 class Saver:
     def POST(self):
         global output_path
         i = web.input()
         image = i.get('image')
         image = image.split('data:image/png;base64,')[1]
-        image_name = i.get('filename').split('.')[0]
+        #image_name = i.get('filename').split('.')[0]
+        global g_filename
+        image_name = g_filename.split('.')[0]
         fp = open('%(output_path)s/%(image_name)s.png' % ({"output_path":output_path, "image_name": image_name}), 'wb')
         fp.write(base64.decodestring(image))
         fp.close()
-        print image_name, "save"
         mylock.release()
+global prelist
+prelist = {}
+class Flush:
+    def GET(self):
+        global input_path
+        global prelist
+        global g_filename
+        req = web.input()
+        width = int(req.get('width'))
+        height = int(req.get('height'))
+        image_ratio = int(req.get('image_ratio'))
+        nowlist = {}
+        arr = None
+        filename = None
+        if mylock.locked() == True:
+            return json.dumps(None)
+        mylock.acquire()
+        for one in os.listdir(input_path):
+            tmp = one.split('.')
+            if tmp[-1].lower() != 'wav':continue
+            nowlist[one] = True
+            if prelist.has_key(one) == False:
+                filename = one
+                break
+        g_filename = filename
+        if filename == None:
+            mylock.release()
+            return json.dumps(None)
+        for one in prelist.keys():
+            if nowlist.has_key(one) == False:
+                prelist.pop(one)
+        prelist[filename] = True
+        audio = WaveDecode(input_path + "/" + filename)
+        arr = audio.toCoordinate(width, height, image_ratio)
+        return arr
 class Uploader:
     def POST(self):
         mylock.acquire()
