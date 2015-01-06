@@ -135,13 +135,14 @@ class Flush:
             if prelist.has_key(one) == False:
                 filename = one
                 break
+        print prelist.keys(), nowlist.keys()
+        for one in prelist.keys():
+            if nowlist.has_key(one) == False:
+                prelist.pop(one)
         g_filename = filename
         if filename == None:
             mylock.release()
             return json.dumps(None)
-        for one in prelist.keys():
-            if nowlist.has_key(one) == False:
-                prelist.pop(one)
         prelist[filename] = True
         audio = WaveDecode(input_path + "/" + filename)
         arr = audio.toCoordinate(width, height, image_ratio)

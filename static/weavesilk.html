@@ -43,7 +43,7 @@
 					<span class="text">清空列表</span>
 				</div-->
 				<div class="btn" id="uploadfiles" data-bind="css: { visible: notPristine }">
-					<span class="text">制作图片</span>
+					<span class="text">服务启动</span>
 				</div>
 				<div class="btn" id="selected-color" data-bind="click: toggleAllControls,css: { visible: notPristine }">
 					<span class="text">参数设置</span>
@@ -118,8 +118,9 @@
 					</div>
 				</div>
 			</div>
-		</div>
-		<div id="drop-target">将文件夹或文件拖入框中</div>
+        </div>
+        <div id="drop-target-hide">hide</div>
+		<!--div id="drop-target">将文件夹或文件拖入框中</div-->
 		<canvas id="silk-1" class="silk-canvas active"></canvas>
 		<canvas id="silk-2" class="silk-canvas buffer"></canvas>
 		<canvas id="sparks"></canvas>
@@ -172,8 +173,8 @@ function draw_image_callback(resp){
 }
 var uploader = new plupload.Uploader({
 	runtimes : 'html5,flash,silverlight,html4',
-	drop_element : 'drop-target',
-	browse_button : 'drop-target',
+	drop_element : 'drop-target-hide',
+	browse_button : 'drop-target-hide',
 	//browse_button : 'pickfiles', // you can pass in id...
 	container: document.getElementById('container'), // ... or DOM Element itself
 	url : '/uploader',
@@ -216,7 +217,7 @@ var uploader = new plupload.Uploader({
                         var image_ratio = $("#sym-ratio-label")[0].innerHTML.split("-")[0];
                         $.ajax({url:"/flush?width=" + width + "&height=" + height + "&image_ratio=" + image_ratio, async: false}).success(draw_image_callback);
                         console.log("flush once");        
-                },5000);
+                },1000);
                 /*
                 uploader.settings.url = "/flush?width=" + width + "&height=" + height + "&image_ratio=" + image_ratio;
 				uploader.start();
@@ -294,7 +295,7 @@ var uploader = new plupload.Uploader({
 });
 uploader.bind('Init', function(up, params) {
 	if (uploader.features.dragdrop) {
-		var target = $("#drop-target")[0];
+		var target = $("#drop-target-hide")[0];
           target.ondragover = function(event) {
             event.dataTransfer.dropEffect = "copy";
           };
