@@ -139,6 +139,8 @@ class Flush:
         for one in prelist.keys():
             if nowlist.has_key(one) == False:
                 prelist.pop(one)
+                image_name = one.split('.')[0]
+                os.remove("%s/%s.png" % (output_path, image_name))
         g_filename = filename
         if filename == None:
             mylock.release()
