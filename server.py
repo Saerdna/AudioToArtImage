@@ -111,41 +111,64 @@ class Saver:
         fp.write(base64.decodestring(image))
         fp.close()
         mylock.release()
-global prelist
-prelist = {}
+global pre_input_list
+pre_input_list = {}
+global pre_output_list
+pre_output_list = {}
 class Flush:
     def GET(self):
         global input_path
-        global prelist
+        global output_path
+        global pre_input_list
+        global pre_output_list
         global g_filename
         req = web.input()
         width = int(req.get('width'))
         height = int(req.get('height'))
         image_ratio = int(req.get('image_ratio'))
-        nowlist = {}
         arr = None
         filename = None
         if mylock.locked() == True:
             return json.dumps(None)
         mylock.acquire()
+        nowlist = {}
+        for one in os.listdir(output_path):
+            tmp = one.split('.')
+            if tmp[-1].lower() != 'png':continue
+            nowlist[one] = True
+        #remove input wav
+        for one in pre_output_list.keys():
+            if nowlist.has_key(one) == False:
+                print >> sys.stderr, "remove wav:%s" % (one)
+                try:
+                    os.remove("%s/%s.wav" % (input_path, one.split('.')[0]))
+                except Exception as Exc:
+                    try:
+                        os.remove("%s/%s.WAV" % (input_path, one.split('.')[0]))
+                    except Exception as Exc:
+                        pass
+        pre_output_list = nowlist
+        nowlist = {}
         for one in os.listdir(input_path):
             tmp = one.split('.')
             if tmp[-1].lower() != 'wav':continue
             nowlist[one] = True
-            if prelist.has_key(one) == False:
+            if pre_input_list.has_key(one) == False:
                 filename = one
-                break
-        print prelist.keys(), nowlist.keys()
-        for one in prelist.keys():
+        print >> sys.stderr, pre_input_list.keys(), nowlist.keys()
+        for one in pre_input_list.keys():
             if nowlist.has_key(one) == False:
-                prelist.pop(one)
+                pre_input_list.pop(one)
                 image_name = one.split('.')[0]
-                os.remove("%s/%s.png" % (output_path, image_name))
+                try:
+                    os.remove("%s/%s.png" % (output_path, image_name))
+                except Exception as Exc:
+                    pass
         g_filename = filename
         if filename == None:
             mylock.release()
             return json.dumps(None)
-        prelist[filename] = True
+        pre_input_list[filename] = True
         audio = WaveDecode(input_path + "/" + filename)
         arr = audio.toCoordinate(width, height, image_ratio)
         return arr
