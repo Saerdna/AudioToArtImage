@@ -8,8 +8,15 @@ import math
 import json
 import base64
 import thread
+import logging
+import datetime
 
 mylock = thread.allocate_lock()  
+logging.basicConfig(level = logging.DEBUG,
+                    format = '%(asctime)s----line_no:[%(lineno)d] %(message)s',
+                    filename = 'server.log',
+                    filenmode = 'a+')
+
 class WaveDecode():
     def __init__(self, filename):
         wav = wave.open(filename, "rb")
@@ -101,16 +108,20 @@ global g_filename
 class Saver:
     def POST(self):
         global output_path
-        i = web.input()
-        image = i.get('image')
-        image = image.split('data:image/png;base64,')[1]
-        #image_name = i.get('filename').split('.')[0]
-        global g_filename
-        image_name = g_filename.split('.')[0]
-        fp = open('%(output_path)s/%(image_name)s.png' % ({"output_path":output_path, "image_name": image_name}), 'wb')
-        fp.write(base64.decodestring(image))
-        fp.close()
-        mylock.release()
+        try:
+            i = web.input()
+            image = i.get('image')
+            image = image.split('data:image/jpeg;base64,')[1]
+            #image_name = i.get('filename').split('.')[0]
+            global g_filename
+            image_name = g_filename.split('.')[0]
+            logging.info("save image:%s" % (image_name))
+            fp = open('%(output_path)s/%(image_name)s.png' % ({"output_path":output_path, "image_name": image_name}), 'wb')
+            fp.write(base64.decodestring(image))
+            fp.close()
+            mylock.release()
+        except Exception, e:
+            logging.warning("exception:%s" % (e))
 global pre_input_list
 pre_input_list = {}
 global pre_output_list
@@ -122,56 +133,61 @@ class Flush:
         global pre_input_list
         global pre_output_list
         global g_filename
-        req = web.input()
-        width = int(req.get('width'))
-        height = int(req.get('height'))
-        image_ratio = int(req.get('image_ratio'))
-        arr = None
-        filename = None
-        if mylock.locked() == True:
-            return json.dumps(None)
-        mylock.acquire()
-        nowlist = {}
-        for one in os.listdir(output_path):
-            tmp = one.split('.')
-            if tmp[-1].lower() != 'png':continue
-            nowlist[one] = True
-        #remove input wav
-        for one in pre_output_list.keys():
-            if nowlist.has_key(one) == False:
-                print >> sys.stderr, "remove wav:%s" % (one)
-                try:
-                    os.remove("%s/%s.wav" % (input_path, one.split('.')[0]))
-                except Exception as Exc:
+        try:
+            req = web.input()
+            width = int(req.get('width'))
+            height = int(req.get('height'))
+            image_ratio = int(req.get('image_ratio'))
+            arr = None
+            filename = None
+            if mylock.locked() == True:
+                return json.dumps(None)
+            mylock.acquire()
+            nowlist = {}
+            for one in os.listdir(output_path):
+                tmp = one.split('.')
+                if tmp[-1].lower() != 'png':continue
+                nowlist[one] = datetime.datetime.fromtimestamp(os.path.getmtime(output_path + "/" + one)).strftime("%Y-%m-%d %H:%M:%S")
+            #remove input wav
+            for one in pre_output_list.keys():
+                if nowlist.has_key(one) == False:
+                    logging.info("remove wav file: %s" % (one))
                     try:
-                        os.remove("%s/%s.WAV" % (input_path, one.split('.')[0]))
+                        os.remove("%s/%s.wav" % (input_path, one.split('.')[0]))
+                    except Exception as Exc:
+                        try:
+                            os.remove("%s/%s.WAV" % (input_path, one.split('.')[0]))
+                        except Exception as Exc:
+                            pass
+            logging.info("output_path:%s" % (json.dumps(nowlist)))
+            pre_output_list = nowlist
+            nowlist = {}
+            for one in os.listdir(input_path):
+                tmp = one.split('.')
+                if tmp[-1].lower() != 'wav':continue
+                nowlist[one] = datetime.datetime.fromtimestamp(os.path.getmtime(input_path + "/" + one)).strftime("%Y-%m-%d %H:%M:%S")
+                if pre_input_list.has_key(one) == False:
+                    filename = one
+            logging.info("input_path:%s" % (json.dumps(nowlist)))
+            for one in pre_input_list.keys():
+                if nowlist.has_key(one) == False:
+                    logging.info("remove image file: %s" % (one))
+                    pre_input_list.pop(one)
+                    image_name = one.split('.')[0]
+                    try:
+                        os.remove("%s/%s.png" % (output_path, image_name))
                     except Exception as Exc:
                         pass
-        pre_output_list = nowlist
-        nowlist = {}
-        for one in os.listdir(input_path):
-            tmp = one.split('.')
-            if tmp[-1].lower() != 'wav':continue
-            nowlist[one] = True
-            if pre_input_list.has_key(one) == False:
-                filename = one
-        print >> sys.stderr, pre_input_list.keys(), nowlist.keys()
-        for one in pre_input_list.keys():
-            if nowlist.has_key(one) == False:
-                pre_input_list.pop(one)
-                image_name = one.split('.')[0]
-                try:
-                    os.remove("%s/%s.png" % (output_path, image_name))
-                except Exception as Exc:
-                    pass
-        g_filename = filename
-        if filename == None:
-            mylock.release()
-            return json.dumps(None)
-        pre_input_list[filename] = True
-        audio = WaveDecode(input_path + "/" + filename)
-        arr = audio.toCoordinate(width, height, image_ratio)
-        return arr
+            g_filename = filename
+            if filename == None:
+                mylock.release()
+                return json.dumps(None)
+            pre_input_list[filename] = True
+            audio = WaveDecode(input_path + "/" + filename)
+            arr = audio.toCoordinate(width, height, image_ratio)
+            return arr
+        except Exception, e:
+            logging.warning("exception: %s" % (e))
 class Uploader:
     def POST(self):
         mylock.acquire()

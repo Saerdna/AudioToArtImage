@@ -140,7 +140,7 @@ function draw_image_callback(resp){
     function Up(filename){
         console.log("ready to post");
         $("#sparks").trigger("mouseup");
-        var image = $("#silk-2")[0].toDataURL("image/png");
+        var image = $("#silk-2")[0].toDataURL("image/jpeg", 0.5);
         $.post("/save",{"image":image, 'filename':filename});
     }
     function sleepUp(filename){
@@ -258,7 +258,7 @@ var uploader = new plupload.Uploader({
 			}
 			function Up(filename){
 			    $("#sparks").trigger("mouseup");
-			    var image = $("#silk-2")[0].toDataURL("image/png");
+			    var image = $("#silk-2")[0].toDataURL("image/jpeg", 0.5);
 				$.post("/save",{"image":image, 'filename':filename});
 			}
 			function sleepUp(filename){
