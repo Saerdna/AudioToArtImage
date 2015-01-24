@@ -159,7 +159,7 @@ class Flush:
                             os.remove("%s/%s.WAV" % (input_path, one.split('.')[0]))
                         except Exception as Exc:
                             pass
-            logging.info("output_path:%s" % (json.dumps(nowlist)))
+            logging.info("image file_num:%d,image files:%s" % (len(nowlist),json.dumps(nowlist)))
             pre_output_list = nowlist
             nowlist = {}
             for one in os.listdir(input_path):
@@ -168,7 +168,7 @@ class Flush:
                 nowlist[one] = datetime.datetime.fromtimestamp(os.path.getmtime(input_path + "/" + one)).strftime("%Y-%m-%d %H:%M:%S")
                 if pre_input_list.has_key(one) == False:
                     filename = one
-            logging.info("input_path:%s" % (json.dumps(nowlist)))
+            logging.info("wav file_num:%d wav files:%s" % (len(nowlist), json.dumps(nowlist)))
             for one in pre_input_list.keys():
                 if nowlist.has_key(one) == False:
                     logging.info("remove image file: %s" % (one))
@@ -183,7 +183,12 @@ class Flush:
                 mylock.release()
                 return json.dumps(None)
             pre_input_list[filename] = True
-            audio = WaveDecode(input_path + "/" + filename)
+            logging.info("try to decode %s" % (filename))
+            try:
+                audio = WaveDecode(input_path + "/" + filename)
+            except Exception, e:
+                logging.warning("decode %s failed, use default wav" % (filename))
+                audio = WaveDecode("./data/default.wav")
             arr = audio.toCoordinate(width, height, image_ratio)
             return arr
         except Exception, e:
